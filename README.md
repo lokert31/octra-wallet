@@ -2,6 +2,13 @@
 
 Browser wallet extension for [Octra Network](https://octra.org/).
 
+<p>
+  <img src="screenshots/dashboard.jpg" width="200" />
+  <img src="screenshots/history.jpg" width="200" />
+  <img src="screenshots/settings.jpg" width="200" />
+  <img src="screenshots/accounts.jpg" width="200" />
+</p>
+
 ## Quick Install
 
 ```bash
