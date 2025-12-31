@@ -1,0 +1,297 @@
+@import "tailwindcss";
+
+/* Tailwind v4 theme configuration - Octra Official Style */
+@theme {
+  /* Octra brand colors - deep blue */
+  --color-octra-blue: #0033FF;
+  --color-octra-blue-hover: #0028CC;
+  --color-octra-dark: #0D0D0D;
+  --color-octra-white: #FFFFFF;
+
+  /* Dark theme (default) */
+  --color-bg-primary: #0D0D0D;
+  --color-bg-secondary: #141414;
+  --color-bg-tertiary: #1A1A1A;
+  --color-bg-hover: #222222;
+  --color-bg-card: #141414;
+  --color-border-primary: #2A2A2A;
+  --color-border-secondary: #3A3A3A;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B0B0B0;
+  --color-text-tertiary: #707070;
+
+  /* Accent colors */
+  --color-accent-primary: #0033FF;
+  --color-accent-primary-hover: #0028CC;
+  --color-accent-green: #22C55E;
+  --color-accent-red: #EF4444;
+  --color-accent-yellow: #F59E0B;
+
+  /* Fonts - Clean sans-serif */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, monospace;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  width: 360px;
+  height: 600px;
+  overflow: hidden;
+}
+
+input, button, textarea {
+  font-family: inherit;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border-secondary);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-tertiary);
+}
+
+/* Octra Button Styles */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 0;
+  transition: all 0.15s ease;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Primary button - Blue fill */
+.btn-primary {
+  background-color: var(--color-octra-blue);
+  color: white;
+  border-color: var(--color-octra-blue);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-octra-blue-hover);
+  border-color: var(--color-octra-blue-hover);
+}
+
+/* Secondary button - Outline */
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-text-primary);
+  border: 2px solid var(--color-border-primary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-octra-blue);
+  color: var(--color-octra-blue);
+}
+
+/* White button (for blue backgrounds) */
+.btn-white {
+  background-color: var(--color-octra-white);
+  color: var(--color-octra-dark);
+  border-color: var(--color-octra-white);
+}
+
+.btn-white:hover:not(:disabled) {
+  background-color: #F0F0F0;
+}
+
+/* Danger button */
+.btn-danger {
+  background-color: transparent;
+  color: var(--color-accent-red);
+  border: 2px solid var(--color-accent-red);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--color-accent-red);
+  color: white;
+}
+
+/* Ghost button */
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: none;
+  padding: 0.5rem 1rem;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-hover);
+}
+
+/* Input styles */
+.input {
+  width: 100%;
+  background-color: var(--color-bg-secondary);
+  border: 2px solid var(--color-border-primary);
+  border-radius: 0;
+  padding: 0.875rem 1rem;
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  transition: all 0.15s ease;
+}
+
+.input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-octra-blue);
+}
+
+.input-error {
+  border-color: var(--color-accent-red);
+}
+
+.input-error:focus {
+  border-color: var(--color-accent-red);
+}
+
+/* Card styles */
+.card {
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border-primary);
+  padding: 1rem;
+}
+
+.card-hover {
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.card-hover:hover {
+  border-color: var(--color-octra-blue);
+}
+
+/* Spinner */
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--color-border-primary);
+  border-top-color: var(--color-octra-blue);
+  border-radius: 9999px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.75rem 1rem;
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  z-index: 50;
+}
+
+.toast-success {
+  border-color: var(--color-accent-green);
+}
+
+.toast-error {
+  border-color: var(--color-accent-red);
+}
+
+/* Blue accent box */
+.accent-box {
+  background-color: var(--color-octra-blue);
+  color: white;
+  padding: 1.5rem;
+}
+
+/* Logo circle */
+.logo-circle {
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--color-octra-blue);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Action buttons grid */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background-color: var(--color-octra-blue);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.action-btn:hover {
+  background-color: var(--color-octra-blue-hover);
+}
+
+.action-btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}

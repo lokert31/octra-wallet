@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Background -->
+  <rect width="128" height="128" fill="#0a0a0a"/>
+
+  <!-- Blue ring -->
+  <circle cx="64" cy="64" r="48" fill="none" stroke="#0066FF" stroke-width="12"/>
+
+  <!-- Unlocked padlock -->
+  <g fill="#0066FF">
+    <!-- Lock body -->
+    <rect x="44" y="60" width="40" height="32" rx="4"/>
+
+    <!-- Shackle (unlocked - shifted right) -->
+    <path d="M52 60 L52 48 Q52 36 64 36 Q76 36 76 48 L76 52"
+          fill="none" stroke="#0066FF" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>
