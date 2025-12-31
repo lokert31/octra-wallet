@@ -9,30 +9,26 @@ Browser wallet extension for [Octra Network](https://octra.org/).
   <img src="screenshots/accounts.jpg" width="200" />
 </p>
 
-## Quick Install
+## Install
+
+### Option 1: Download Ready-to-Use
+
+1. Download zip from [Releases](https://github.com/lokert31/octra-wallet/releases)
+2. Extract the archive
+3. Open `chrome://extensions/` (or `brave://extensions/`, `edge://extensions/`)
+4. Enable **Developer mode**
+5. Click **Load unpacked** → select extracted folder
+
+### Option 2: Build from Source
 
 ```bash
-# clone and build
 git clone https://github.com/lokert31/octra-wallet.git
 cd octra-wallet
 npm install
 npm run build
 ```
 
-Then load `dist/` folder as unpacked extension:
-- Chrome: `chrome://extensions/` → Developer mode → Load unpacked
-- Brave: `brave://extensions/` → Developer mode → Load unpacked
-- Edge: `edge://extensions/` → Developer mode → Load unpacked
-
-## Download
-
-Pre-built extension from [Releases](https://github.com/lokert31/octra-wallet/releases) or build from source:
-
-```bash
-git clone https://github.com/lokert31/octra-wallet.git
-cd octra-wallet
-npm install && npm run build
-```
+Then load `dist/` folder as unpacked extension.
 
 ## Features
 
