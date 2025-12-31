@@ -1,6 +1,6 @@
 # Octra Wallet
 
-Browser wallet extension for [Octra Network](https://octra.network).
+Browser wallet extension for [Octra Network](https://octra.org/).
 
 ## Quick Install
 
