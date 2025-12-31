@@ -12,11 +12,14 @@ type ImportTab = 'key' | 'mnemonic';
 export default function Settings() {
   const navigate = useNavigate();
   const activeAccount = useActiveAccount();
-  const { accounts, setActiveAccountIndex, addAccount, renameAccount, setLocked, showToast } = useWalletStore();
+  const { accounts, setActiveAccountIndex, addAccount, removeAccount, renameAccount, setLocked, showToast } = useWalletStore();
 
   // Rename state
   const [renameAccountIndex, setRenameAccountIndex] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState('');
+
+  // Delete state
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
 
   const [modal, setModal] = useState<Modal>('none');
   const [importTab, setImportTab] = useState<ImportTab>('key');
@@ -127,6 +130,18 @@ export default function Settings() {
       MESSAGE_TYPES.RENAME_ACCOUNT,
       { index, name: newName }
     );
+  };
+
+  const handleDeleteAccount = (index: number) => {
+    if (accounts.length <= 1) {
+      showToast('Cannot delete last account', 'error');
+      return;
+    }
+
+    removeAccount(index);
+    setDeletingIndex(null);
+    sendMessage<{ index: number }, void>(MESSAGE_TYPES.REMOVE_ACCOUNT, { index });
+    showToast('Account removed', 'success');
   };
 
   const handleSelectAccount = async (index: number) => {
@@ -626,7 +641,7 @@ export default function Settings() {
           </div>
 
           {/* Scrollable account list */}
-          <div style={{ maxHeight: '180px' }} className="overflow-y-auto space-y-2">
+          <div style={{ maxHeight: '140px' }} className="overflow-y-auto space-y-1">
             {accounts
               .filter((account) =>
                 searchQuery === '' ||
@@ -636,8 +651,8 @@ export default function Settings() {
               .map((account) => (
                 <div
                   key={account.index}
-                  style={{ padding: '12px' }}
-                  className={`w-full flex items-center gap-3 border transition-colors ${
+                  style={{ padding: '8px 10px' }}
+                  className={`w-full flex items-center gap-2 border transition-colors ${
                     account.index === activeAccount?.index
                       ? 'border-octra-blue bg-octra-blue/10'
                       : 'border-border-primary'
@@ -645,27 +660,38 @@ export default function Settings() {
                 >
                   <button
                     onClick={() => handleSelectAccount(account.index)}
-                    className="flex items-center gap-3 flex-1 min-w-0"
+                    className="flex items-center gap-2 flex-1 min-w-0"
                   >
-                    <div style={{ width: '40px', height: '40px' }} className="bg-octra-blue flex items-center justify-center text-white font-bold flex-shrink-0">
+                    <div style={{ width: '32px', height: '32px' }} className="bg-octra-blue flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                       {account.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 text-left min-w-0">
-                      <div className="text-sm font-semibold truncate">{account.name}</div>
+                      <div className="text-xs font-semibold truncate">{account.name}</div>
                       <div className="text-xs font-mono text-text-tertiary truncate">{truncateAddress(account.address)}</div>
                     </div>
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleOpenRename(account.index, account.name); }}
-                    className="p-2 hover:bg-bg-hover transition-colors flex-shrink-0"
+                    className="p-1 hover:bg-bg-hover transition-colors flex-shrink-0"
                     title="Rename"
                   >
-                    <svg style={{ width: '16px', height: '16px' }} className="text-text-tertiary hover:text-octra-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg style={{ width: '14px', height: '14px' }} className="text-text-tertiary hover:text-octra-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
                   </button>
+                  {accounts.length > 1 && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeletingIndex(account.index); }}
+                      className="p-1 hover:bg-bg-hover transition-colors flex-shrink-0"
+                      title="Delete"
+                    >
+                      <svg style={{ width: '14px', height: '14px' }} className="text-text-tertiary hover:text-accent-red" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
                   {account.index === activeAccount?.index && (
-                    <svg className="w-5 h-5 text-octra-blue flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 h-4 text-octra-blue flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   )}
@@ -851,6 +877,34 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deletingIndex !== null && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div style={{ margin: '16px', padding: '20px' }} className="bg-bg-primary border border-border-primary max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-2">Delete Account?</h3>
+            <p className="text-text-secondary text-sm mb-4">
+              This will remove the account from your wallet. Make sure you have backed up the private key.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setDeletingIndex(null)}
+                className="flex-1"
+              >
+                CANCEL
+              </Button>
+              <button
+                onClick={() => handleDeleteAccount(deletingIndex)}
+                style={{ padding: '12px' }}
+                className="flex-1 bg-accent-red text-white font-semibold hover:bg-accent-red/80 transition-colors"
+              >
+                DELETE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
