@@ -11,7 +11,7 @@ type View = 'list' | 'add' | 'import-mnemonic' | 'import-key';
 export default function Accounts() {
   const navigate = useNavigate();
   const activeAccount = useActiveAccount();
-  const { accounts, setActiveAccountIndex, addAccount, renameAccount, updateBalance, balances, showToast } = useWalletStore();
+  const { accounts, setActiveAccountIndex, addAccount, removeAccount, renameAccount, updateBalance, balances, showToast } = useWalletStore();
 
   const [view, setView] = useState<View>('list');
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +27,9 @@ export default function Accounts() {
   // Rename state
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
+
+  // Delete confirmation
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
 
   // Fetch all balances on mount
   useEffect(() => {
@@ -101,6 +104,20 @@ export default function Accounts() {
     e.stopPropagation();
     setEditingIndex(null);
     setEditName('');
+  };
+
+  const handleDeleteAccount = async (index: number) => {
+    if (accounts.length <= 1) {
+      showToast('Cannot delete last account', 'error');
+      return;
+    }
+
+    removeAccount(index);
+    setDeletingIndex(null);
+
+    // Background sync
+    sendMessage<{ index: number }, void>(MESSAGE_TYPES.REMOVE_ACCOUNT, { index });
+    showToast('Account removed', 'success');
   };
 
   const handlePaste = async (type: 'key' | 'mnemonic') => {
@@ -546,6 +563,16 @@ export default function Accounts() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
+                    {accounts.length > 1 && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDeletingIndex(account.index); }}
+                        className="text-text-tertiary hover:text-accent-red flex-shrink-0"
+                      >
+                        <svg style={{ width: '14px', height: '14px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                     <span className="text-sm font-semibold whitespace-nowrap">
@@ -581,6 +608,34 @@ export default function Accounts() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deletingIndex !== null && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div style={{ margin: '16px', padding: '20px' }} className="bg-bg-primary border border-border-primary max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-2">Delete Account?</h3>
+            <p className="text-text-secondary text-sm mb-4">
+              This will remove the account from your wallet. Make sure you have backed up the private key.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                onClick={() => setDeletingIndex(null)}
+                className="flex-1"
+              >
+                CANCEL
+              </Button>
+              <button
+                onClick={() => handleDeleteAccount(deletingIndex)}
+                style={{ padding: '12px' }}
+                className="flex-1 bg-accent-red text-white font-semibold hover:bg-accent-red/80 transition-colors"
+              >
+                DELETE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
