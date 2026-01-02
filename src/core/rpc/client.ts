@@ -310,6 +310,21 @@ export class OctraRPC {
   }
 
   /**
+   * Extract 32-byte seed from 64-byte Ed25519 secret key
+   * Octra API expects 32-byte seed, not full 64-byte key
+   */
+  private static extractSeed(privateKeyBase64: string): string {
+    const fullKey = Uint8Array.from(atob(privateKeyBase64), c => c.charCodeAt(0));
+    // If already 32 bytes, return as-is
+    if (fullKey.length === 32) {
+      return privateKeyBase64;
+    }
+    // Extract first 32 bytes (seed) from 64-byte key
+    const seed = fullKey.slice(0, 32);
+    return btoa(String.fromCharCode(...seed));
+  }
+
+  /**
    * Encrypt Balance - convert public balance to encrypted (private) balance
    * This is the Octra equivalent of "shield"
    */
@@ -319,6 +334,9 @@ export class OctraRPC {
     privateKey: string;
   }): Promise<SendTxResponse> {
     try {
+      // Extract 32-byte seed from private key (API expects seed, not full 64-byte key)
+      const seedKey = this.extractSeed(data.privateKey);
+
       // First get current encrypted balance
       const encData = await this.getPrivateBalance(data.address, data.privateKey);
       const currentRaw = encData.decrypted_balance ? parseInt(encData.decrypted_balance, 10) : 0;
@@ -327,8 +345,8 @@ export class OctraRPC {
       const amountRaw = Math.floor(data.amount * Math.pow(10, OCTRA_CONFIG.TOKEN_DECIMALS));
       const newRaw = currentRaw + amountRaw;
 
-      // Encrypt the new balance
-      const encryptedData = await encryptClientBalance(newRaw, data.privateKey);
+      // Encrypt the new balance using seed key
+      const encryptedData = await encryptClientBalance(newRaw, seedKey);
 
       const response = await fetch(`${this.baseUrl}/encrypt_balance`, {
         method: 'POST',
@@ -336,7 +354,7 @@ export class OctraRPC {
         body: JSON.stringify({
           address: data.address,
           amount: String(amountRaw),
-          private_key: data.privateKey,
+          private_key: seedKey,
           encrypted_data: encryptedData,
         }),
       });
@@ -363,6 +381,9 @@ export class OctraRPC {
     privateKey: string;
   }): Promise<SendTxResponse> {
     try {
+      // Extract 32-byte seed from private key (API expects seed, not full 64-byte key)
+      const seedKey = this.extractSeed(data.privateKey);
+
       // First get current encrypted balance
       const encData = await this.getPrivateBalance(data.address, data.privateKey);
       const currentRaw = encData.decrypted_balance ? parseInt(encData.decrypted_balance, 10) : 0;
@@ -377,8 +398,8 @@ export class OctraRPC {
       // Calculate new encrypted total (current - amount)
       const newRaw = currentRaw - amountRaw;
 
-      // Encrypt the new balance
-      const encryptedData = await encryptClientBalance(newRaw, data.privateKey);
+      // Encrypt the new balance using seed key
+      const encryptedData = await encryptClientBalance(newRaw, seedKey);
 
       const response = await fetch(`${this.baseUrl}/decrypt_balance`, {
         method: 'POST',
@@ -386,7 +407,7 @@ export class OctraRPC {
         body: JSON.stringify({
           address: data.address,
           amount: String(amountRaw),
-          private_key: data.privateKey,
+          private_key: seedKey,
           encrypted_data: encryptedData,
         }),
       });
