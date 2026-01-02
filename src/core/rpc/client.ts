@@ -7,6 +7,7 @@ import type {
   PrivateBalanceResponse,
   PendingTransfer,
 } from '@shared/types';
+import { encryptClientBalance } from '@core/crypto/balance-encryption';
 
 /**
  * Octra RPC Client
@@ -309,65 +310,119 @@ export class OctraRPC {
   }
 
   /**
-   * Shield - convert public balance to private balance
+   * Encrypt Balance - convert public balance to encrypted (private) balance
+   * This is the Octra equivalent of "shield"
    */
-  static async shieldBalance(data: {
+  static async encryptBalance(data: {
     address: string;
     amount: number;
     privateKey: string;
   }): Promise<SendTxResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/shield`, {
+      // First get current encrypted balance
+      const encData = await this.getPrivateBalance(data.address, data.privateKey);
+      const currentRaw = encData.decrypted_balance ? parseInt(encData.decrypted_balance, 10) : 0;
+
+      // Calculate new encrypted total (current + amount)
+      const amountRaw = Math.floor(data.amount * Math.pow(10, OCTRA_CONFIG.TOKEN_DECIMALS));
+      const newRaw = currentRaw + amountRaw;
+
+      // Encrypt the new balance
+      const encryptedData = await encryptClientBalance(newRaw, data.privateKey);
+
+      const response = await fetch(`${this.baseUrl}/encrypt_balance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           address: data.address,
-          amount: Math.floor(data.amount * Math.pow(10, OCTRA_CONFIG.TOKEN_DECIMALS)),
+          amount: String(amountRaw),
           private_key: data.privateKey,
+          encrypted_data: encryptedData,
         }),
       });
 
       const result = await response.json();
 
-      if (response.ok && (result.status === 'accepted' || result.tx_hash)) {
-        return { status: 'accepted', tx_hash: result.tx_hash };
+      if (response.ok && (result.status === 'accepted' || result.tx_hash || result.success)) {
+        return { status: 'accepted', tx_hash: result.tx_hash || result.hash || 'success' };
       }
 
-      return { status: 'failed', error: result.error || 'Shield failed' };
+      return { status: 'failed', error: result.error || result.message || 'Encrypt balance failed' };
     } catch (error) {
       return { status: 'failed', error: error instanceof Error ? error.message : 'Network error' };
     }
   }
 
   /**
-   * Unshield - convert private balance to public balance
+   * Decrypt Balance - convert encrypted (private) balance back to public balance
+   * This is the Octra equivalent of "unshield"
+   */
+  static async decryptBalance(data: {
+    address: string;
+    amount: number;
+    privateKey: string;
+  }): Promise<SendTxResponse> {
+    try {
+      // First get current encrypted balance
+      const encData = await this.getPrivateBalance(data.address, data.privateKey);
+      const currentRaw = encData.decrypted_balance ? parseInt(encData.decrypted_balance, 10) : 0;
+
+      const amountRaw = Math.floor(data.amount * Math.pow(10, OCTRA_CONFIG.TOKEN_DECIMALS));
+
+      // Check sufficient balance
+      if (currentRaw < amountRaw) {
+        return { status: 'failed', error: 'Insufficient encrypted balance' };
+      }
+
+      // Calculate new encrypted total (current - amount)
+      const newRaw = currentRaw - amountRaw;
+
+      // Encrypt the new balance
+      const encryptedData = await encryptClientBalance(newRaw, data.privateKey);
+
+      const response = await fetch(`${this.baseUrl}/decrypt_balance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: data.address,
+          amount: String(amountRaw),
+          private_key: data.privateKey,
+          encrypted_data: encryptedData,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && (result.status === 'accepted' || result.tx_hash || result.success)) {
+        return { status: 'accepted', tx_hash: result.tx_hash || result.hash || 'success' };
+      }
+
+      return { status: 'failed', error: result.error || result.message || 'Decrypt balance failed' };
+    } catch (error) {
+      return { status: 'failed', error: error instanceof Error ? error.message : 'Network error' };
+    }
+  }
+
+  /**
+   * @deprecated Use encryptBalance instead
+   */
+  static async shieldBalance(data: {
+    address: string;
+    amount: number;
+    privateKey: string;
+  }): Promise<SendTxResponse> {
+    return this.encryptBalance(data);
+  }
+
+  /**
+   * @deprecated Use decryptBalance instead
    */
   static async unshieldBalance(data: {
     address: string;
     amount: number;
     privateKey: string;
   }): Promise<SendTxResponse> {
-    try {
-      const response = await fetch(`${this.baseUrl}/unshield`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          address: data.address,
-          amount: Math.floor(data.amount * Math.pow(10, OCTRA_CONFIG.TOKEN_DECIMALS)),
-          private_key: data.privateKey,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok && (result.status === 'accepted' || result.tx_hash)) {
-        return { status: 'accepted', tx_hash: result.tx_hash };
-      }
-
-      return { status: 'failed', error: result.error || 'Unshield failed' };
-    } catch (error) {
-      return { status: 'failed', error: error instanceof Error ? error.message : 'Network error' };
-    }
+    return this.decryptBalance(data);
   }
 
   /**

@@ -418,7 +418,7 @@ async function handleMessage(
         return { success: true, data: publicKey };
       }
 
-      case MESSAGE_TYPES.SHIELD_BALANCE: {
+      case MESSAGE_TYPES.ENCRYPT_BALANCE: {
         const { address, amount, accountIndex } = payload as {
           address: string;
           amount: number;
@@ -430,20 +430,20 @@ async function handleMessage(
         }
 
         const { privateKey } = VaultService.getPrivateKey(accountIndex);
-        const result = await OctraRPC.shieldBalance({
+        const result = await OctraRPC.encryptBalance({
           address,
           amount,
           privateKey,
         });
 
         if (result.status === 'accepted') {
-          return { success: true, data: { txHash: result.tx_hash } };
+          return { success: true, data: { txHash: result.tx_hash || 'success' } };
         }
 
-        return { success: false, error: result.error || 'Shield failed' };
+        return { success: false, error: result.error || 'Encrypt balance failed' };
       }
 
-      case MESSAGE_TYPES.UNSHIELD_BALANCE: {
+      case MESSAGE_TYPES.DECRYPT_BALANCE: {
         const { address, amount, accountIndex } = payload as {
           address: string;
           amount: number;
@@ -455,17 +455,17 @@ async function handleMessage(
         }
 
         const { privateKey } = VaultService.getPrivateKey(accountIndex);
-        const result = await OctraRPC.unshieldBalance({
+        const result = await OctraRPC.decryptBalance({
           address,
           amount,
           privateKey,
         });
 
         if (result.status === 'accepted') {
-          return { success: true, data: { txHash: result.tx_hash } };
+          return { success: true, data: { txHash: result.tx_hash || 'success' } };
         }
 
-        return { success: false, error: result.error || 'Unshield failed' };
+        return { success: false, error: result.error || 'Decrypt balance failed' };
       }
 
       // === dApp Operations ===

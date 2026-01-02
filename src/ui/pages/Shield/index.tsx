@@ -6,21 +6,21 @@ import { MESSAGE_TYPES, OCTRA_CONFIG } from '@shared/constants';
 import { Button } from '@ui/components/common/Button';
 import { Input } from '@ui/components/common/Input';
 
-type Mode = 'shield' | 'unshield';
+type Mode = 'encrypt' | 'decrypt';
 
-export default function Shield() {
+export default function EncryptBalance() {
   const navigate = useNavigate();
   const activeAccount = useActiveAccount();
   const publicBalance = useAccountBalance(activeAccount?.address || '');
   const { privateBalances, showToast, activeAccountIndex, updateBalance, updatePrivateBalance } = useWalletStore();
 
-  const [mode, setMode] = useState<Mode>('shield');
+  const [mode, setMode] = useState<Mode>('encrypt');
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const privateBalance = activeAccount ? privateBalances[activeAccount.address] || '0' : '0';
-  const availableBalance = mode === 'shield' ? parseFloat(publicBalance) : parseFloat(privateBalance);
+  const availableBalance = mode === 'encrypt' ? parseFloat(publicBalance) : parseFloat(privateBalance);
 
   const handleSubmit = async () => {
     setError('');
@@ -32,7 +32,7 @@ export default function Shield() {
     }
 
     if (amountNum > availableBalance) {
-      setError(`Insufficient ${mode === 'shield' ? 'public' : 'private'} balance`);
+      setError(`Insufficient ${mode === 'encrypt' ? 'public' : 'encrypted'} balance`);
       return;
     }
 
@@ -41,7 +41,7 @@ export default function Shield() {
     setLoading(true);
 
     try {
-      const messageType = mode === 'shield' ? MESSAGE_TYPES.SHIELD_BALANCE : MESSAGE_TYPES.UNSHIELD_BALANCE;
+      const messageType = mode === 'encrypt' ? MESSAGE_TYPES.ENCRYPT_BALANCE : MESSAGE_TYPES.DECRYPT_BALANCE;
       const response = await sendMessage<
         { address: string; amount: number; accountIndex: number },
         { txHash: string }
@@ -53,9 +53,9 @@ export default function Shield() {
 
       if (response.success && response.data) {
         showToast(
-          mode === 'shield' ? 'Shielded successfully!' : 'Unshielded successfully!',
+          mode === 'encrypt' ? 'Balance encrypted!' : 'Balance decrypted!',
           'success',
-          { subMessage: `Hash: ${response.data.txHash.slice(0, 16)}...` }
+          { subMessage: response.data.txHash ? `Hash: ${response.data.txHash.slice(0, 16)}...` : 'Success' }
         );
 
         // Refresh balances
@@ -78,9 +78,9 @@ export default function Shield() {
           updatePrivateBalance(activeAccount.address, privateResponse.data.decrypted_balance);
         }
 
-        navigate('/');
+        navigate('/dashboard');
       } else {
-        setError(response.error || `${mode === 'shield' ? 'Shield' : 'Unshield'} failed`);
+        setError(response.error || `${mode === 'encrypt' ? 'Encrypt' : 'Decrypt'} failed`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Operation failed');
@@ -104,9 +104,9 @@ export default function Shield() {
         </button>
         <h1 className="text-lg font-semibold uppercase tracking-wider flex items-center gap-2">
           <svg style={{ width: '20px', height: '20px' }} className="text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          Shield / Unshield
+          Encrypt / Decrypt
         </h1>
       </header>
 
@@ -114,33 +114,33 @@ export default function Shield() {
         {/* Mode Toggle */}
         <div className="flex gap-2">
           <button
-            onClick={() => { setMode('shield'); setAmount(''); setError(''); }}
+            onClick={() => { setMode('encrypt'); setAmount(''); setError(''); }}
             style={{ padding: '12px' }}
             className={`flex-1 text-sm font-semibold uppercase tracking-wider transition-colors ${
-              mode === 'shield'
+              mode === 'encrypt'
                 ? 'bg-purple-600 text-white'
                 : 'bg-bg-secondary border border-border-primary text-text-secondary hover:border-purple-500'
             }`}
           >
-            Shield
+            Encrypt
           </button>
           <button
-            onClick={() => { setMode('unshield'); setAmount(''); setError(''); }}
+            onClick={() => { setMode('decrypt'); setAmount(''); setError(''); }}
             style={{ padding: '12px' }}
             className={`flex-1 text-sm font-semibold uppercase tracking-wider transition-colors ${
-              mode === 'unshield'
+              mode === 'decrypt'
                 ? 'bg-purple-600 text-white'
                 : 'bg-bg-secondary border border-border-primary text-text-secondary hover:border-purple-500'
             }`}
           >
-            Unshield
+            Decrypt
           </button>
         </div>
 
         {/* Info */}
         <div style={{ padding: '12px' }} className="bg-purple-900/20 border border-purple-500/30">
           <div className="text-xs text-purple-400 uppercase tracking-wider mb-1">
-            {mode === 'shield' ? 'Public Balance' : 'Private Balance'}
+            {mode === 'encrypt' ? 'Public Balance' : 'Encrypted Balance'}
           </div>
           <div className="text-lg font-bold text-purple-300">
             {availableBalance.toFixed(6)} {OCTRA_CONFIG.TOKEN_SYMBOL}
@@ -159,10 +159,10 @@ export default function Shield() {
         {/* Target */}
         <div style={{ padding: '12px' }} className="bg-bg-secondary border border-border-primary">
           <div className="text-xs text-text-tertiary uppercase tracking-wider mb-1">
-            {mode === 'shield' ? 'To Private Balance' : 'To Public Balance'}
+            {mode === 'encrypt' ? 'To Encrypted Balance' : 'To Public Balance'}
           </div>
           <div className="text-lg font-bold text-text-primary">
-            {mode === 'shield' ? parseFloat(privateBalance).toFixed(6) : parseFloat(publicBalance).toFixed(6)} {OCTRA_CONFIG.TOKEN_SYMBOL}
+            {mode === 'encrypt' ? parseFloat(privateBalance).toFixed(6) : parseFloat(publicBalance).toFixed(6)} {OCTRA_CONFIG.TOKEN_SYMBOL}
           </div>
         </div>
 
@@ -191,9 +191,9 @@ export default function Shield() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>
-              {mode === 'shield'
-                ? 'Shield converts your public balance to private encrypted balance. This makes your funds private and untraceable.'
-                : 'Unshield converts your private balance back to public balance. This makes your funds visible on the blockchain.'}
+              {mode === 'encrypt'
+                ? 'Encrypt converts your public balance to encrypted private balance using FHE. Your funds become private and can be sent confidentially.'
+                : 'Decrypt converts your encrypted balance back to public balance. Your funds become visible on the blockchain.'}
             </span>
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function Shield() {
           loading={loading}
           className="w-full bg-purple-600 hover:bg-purple-700"
         >
-          {loading ? 'PROCESSING...' : mode === 'shield' ? 'SHIELD' : 'UNSHIELD'}
+          {loading ? 'PROCESSING...' : mode === 'encrypt' ? 'ENCRYPT BALANCE' : 'DECRYPT BALANCE'}
         </Button>
       </div>
     </div>

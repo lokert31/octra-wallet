@@ -269,10 +269,10 @@ export default function Dashboard() {
       <div style={{ padding: '8px 16px', display: 'flex', gap: '6px' }}>
         <button
           onClick={() => navigate('/send')}
-          style={{ flex: 1, padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-          className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-xs uppercase tracking-wider"
+          style={{ flex: 1, padding: '10px 2px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}
+          className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-[10px] uppercase tracking-wider"
         >
-          <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M7 11l5-5m0 0l5 5m-5-5v12" />
           </svg>
           SEND
@@ -280,32 +280,43 @@ export default function Dashboard() {
 
         <button
           onClick={() => navigate('/receive')}
-          style={{ flex: 1, padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-          className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-xs uppercase tracking-wider"
+          style={{ flex: 1, padding: '10px 2px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}
+          className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-[10px] uppercase tracking-wider"
         >
-          <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M17 13l-5 5m0 0l-5-5m5 5V6" />
           </svg>
           RECEIVE
         </button>
 
         <button
-          onClick={() => navigate('/send-private')}
-          style={{ flex: 1, padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-          className="bg-purple-600 hover:bg-purple-700 transition-colors text-white font-semibold text-xs uppercase tracking-wider"
+          onClick={() => navigate('/encrypt')}
+          style={{ flex: 1, padding: '10px 2px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}
+          className="bg-purple-600 hover:bg-purple-700 transition-colors text-white font-semibold text-[10px] uppercase tracking-wider"
         >
-          <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          ENCRYPT
+        </button>
+
+        <button
+          onClick={() => navigate('/send-private')}
+          style={{ flex: 1, padding: '10px 2px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}
+          className="bg-purple-600 hover:bg-purple-700 transition-colors text-white font-semibold text-[10px] uppercase tracking-wider"
+        >
+          <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
           PRIVATE
         </button>
 
         <button
           onClick={() => navigate('/history')}
-          style={{ flex: 1, padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
-          className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-xs uppercase tracking-wider"
+          style={{ flex: 1, padding: '10px 2px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}
+          className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-[10px] uppercase tracking-wider"
         >
-          <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '18px', height: '18px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           HISTORY
