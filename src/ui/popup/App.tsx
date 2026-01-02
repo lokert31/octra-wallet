@@ -11,6 +11,8 @@ import ImportWallet from '@ui/pages/Welcome/ImportWallet';
 import Unlock from '@ui/pages/Unlock';
 import Dashboard from '@ui/pages/Dashboard';
 import Send from '@ui/pages/Send';
+import SendPrivate from '@ui/pages/SendPrivate';
+import PendingTransfers from '@ui/pages/PendingTransfers';
 import Receive from '@ui/pages/Receive';
 import History from '@ui/pages/History';
 import Settings from '@ui/pages/Settings';
@@ -93,6 +95,8 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/accounts" element={<Accounts />} />
         <Route path="/send" element={<Send />} />
+        <Route path="/send-private" element={<SendPrivate />} />
+        <Route path="/pending-transfers" element={<PendingTransfers />} />
         <Route path="/receive" element={<Receive />} />
         <Route path="/history" element={<History />} />
         <Route path="/settings" element={<Settings />} />

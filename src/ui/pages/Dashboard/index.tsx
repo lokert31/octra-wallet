@@ -3,17 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { useWalletStore, useActiveAccount } from '@ui/store/wallet.store';
 import { sendMessage } from '@shared/messaging';
 import { MESSAGE_TYPES, OCTRA_CONFIG, UI_CONFIG, NETWORKS, type NetworkId } from '@shared/constants';
+import type { PendingTransfer } from '@shared/types';
 import { AccountSelector } from '@ui/components/wallet/AccountSelector';
 import { Spinner } from '@ui/components/common/Spinner';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const activeAccount = useActiveAccount();
-  const { balances, updateBalance, showToast, network, setNetwork } = useWalletStore();
+  const { balances, updateBalance, privateBalances, updatePrivateBalance, pendingPrivateTransfers, setPendingPrivateTransfers, showToast, network, setNetwork, activeAccountIndex } = useWalletStore();
   const [isHidden, setIsHidden] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [showPrivate, setShowPrivate] = useState(false);
 
   const balance = activeAccount ? balances[activeAccount.address] : undefined;
+  const privateBalance = activeAccount ? privateBalances[activeAccount.address] : undefined;
+  const pendingCount = pendingPrivateTransfers.length;
 
   // Load network on mount
   useEffect(() => {
@@ -53,6 +57,7 @@ export default function Dashboard() {
     if (!activeAccount) return;
 
     try {
+      // Fetch public balance
       const response = await sendMessage<{ address: string }, { balance: string }>(
         MESSAGE_TYPES.GET_BALANCE,
         { address: activeAccount.address }
@@ -60,6 +65,29 @@ export default function Dashboard() {
 
       if (response.success && response.data) {
         updateBalance(activeAccount.address, response.data.balance);
+      }
+
+      // Fetch private balance
+      const privateResponse = await sendMessage<
+        { address: string; accountIndex: number },
+        { decrypted_balance?: string; has_private_balance: boolean }
+      >(MESSAGE_TYPES.GET_PRIVATE_BALANCE, {
+        address: activeAccount.address,
+        accountIndex: activeAccountIndex,
+      });
+
+      if (privateResponse.success && privateResponse.data?.decrypted_balance) {
+        updatePrivateBalance(activeAccount.address, privateResponse.data.decrypted_balance);
+      }
+
+      // Fetch pending private transfers
+      const pendingResponse = await sendMessage<{ address: string }, PendingTransfer[]>(
+        MESSAGE_TYPES.GET_PENDING_TRANSFERS,
+        { address: activeAccount.address }
+      );
+
+      if (pendingResponse.success && pendingResponse.data) {
+        setPendingPrivateTransfers(pendingResponse.data);
       }
     } catch (error) {
       console.error('Failed to fetch balance:', error);
@@ -125,7 +153,21 @@ export default function Dashboard() {
       {/* Balance Section - with margins */}
       <div style={{ margin: '8px 16px 0 16px', padding: '20px' }} className="bg-octra-blue">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm opacity-80 uppercase tracking-wider text-white">Total Balance</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPrivate(false)}
+              className={`text-sm uppercase tracking-wider transition-colors ${!showPrivate ? 'text-white' : 'text-white/50 hover:text-white/70'}`}
+            >
+              Public
+            </button>
+            <span className="text-white/30">|</span>
+            <button
+              onClick={() => setShowPrivate(true)}
+              className={`text-sm uppercase tracking-wider transition-colors ${showPrivate ? 'text-white' : 'text-white/50 hover:text-white/70'}`}
+            >
+              Private
+            </button>
+          </div>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -145,9 +187,38 @@ export default function Dashboard() {
           </button>
         </div>
         <div className="text-4xl font-bold text-white">
-          {isHidden ? '••••••' : formatBalance(balance)} <span className="text-lg">{OCTRA_CONFIG.TOKEN_SYMBOL}</span>
+          {isHidden ? '••••••' : formatBalance(showPrivate ? privateBalance : balance)} <span className="text-lg">{OCTRA_CONFIG.TOKEN_SYMBOL}</span>
         </div>
+        {showPrivate && (
+          <div className="text-xs text-white/60 mt-1 flex items-center gap-1">
+            <svg style={{ width: '12px', height: '12px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Encrypted balance
+          </div>
+        )}
       </div>
+
+      {/* Pending transfers banner */}
+      {pendingCount > 0 && (
+        <button
+          onClick={() => navigate('/pending-transfers')}
+          style={{ margin: '8px 16px 0 16px', padding: '12px' }}
+          className="w-auto bg-purple-600/20 border border-purple-500/50 flex items-center justify-between hover:bg-purple-600/30 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <svg style={{ width: '18px', height: '18px' }} className="text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm text-purple-300">
+              {pendingCount} pending transfer{pendingCount > 1 ? 's' : ''} to claim
+            </span>
+          </div>
+          <svg style={{ width: '16px', height: '16px' }} className="text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
 
       {/* Address row */}
       <div style={{ padding: '12px 16px' }}>
@@ -195,24 +266,35 @@ export default function Dashboard() {
       </div>
 
       {/* Action Buttons - rectangular with margins */}
-      <div style={{ padding: '8px 16px', display: 'flex', gap: '12px' }}>
+      <div style={{ padding: '8px 16px', display: 'flex', gap: '8px' }}>
         <button
           onClick={() => navigate('/send')}
-          style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+          style={{ flex: 1, padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
           className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-xs uppercase tracking-wider"
         >
-          <svg style={{ width: '24px', height: '24px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '22px', height: '22px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M7 11l5-5m0 0l5 5m-5-5v12" />
           </svg>
           SEND
         </button>
 
         <button
+          onClick={() => navigate('/send-private')}
+          style={{ flex: 1, padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
+          className="bg-purple-600 hover:bg-purple-700 transition-colors text-white font-semibold text-xs uppercase tracking-wider"
+        >
+          <svg style={{ width: '22px', height: '22px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          PRIVATE
+        </button>
+
+        <button
           onClick={() => navigate('/receive')}
-          style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+          style={{ flex: 1, padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
           className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-xs uppercase tracking-wider"
         >
-          <svg style={{ width: '24px', height: '24px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '22px', height: '22px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M17 13l-5 5m0 0l-5-5m5 5V6" />
           </svg>
           RECEIVE
@@ -220,10 +302,10 @@ export default function Dashboard() {
 
         <button
           onClick={() => navigate('/history')}
-          style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}
+          style={{ flex: 1, padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
           className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-xs uppercase tracking-wider"
         >
-          <svg style={{ width: '24px', height: '24px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '22px', height: '22px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           HISTORY
