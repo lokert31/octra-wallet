@@ -13,6 +13,7 @@ import Dashboard from '@ui/pages/Dashboard';
 import Send from '@ui/pages/Send';
 import SendPrivate from '@ui/pages/SendPrivate';
 import PendingTransfers from '@ui/pages/PendingTransfers';
+import Shield from '@ui/pages/Shield';
 import Receive from '@ui/pages/Receive';
 import History from '@ui/pages/History';
 import Settings from '@ui/pages/Settings';
@@ -97,6 +98,7 @@ function App() {
         <Route path="/send" element={<Send />} />
         <Route path="/send-private" element={<SendPrivate />} />
         <Route path="/pending-transfers" element={<PendingTransfers />} />
+        <Route path="/shield" element={<Shield />} />
         <Route path="/receive" element={<Receive />} />
         <Route path="/history" element={<History />} />
         <Route path="/settings" element={<Settings />} />

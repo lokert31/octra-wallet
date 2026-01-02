@@ -418,6 +418,56 @@ async function handleMessage(
         return { success: true, data: publicKey };
       }
 
+      case MESSAGE_TYPES.SHIELD_BALANCE: {
+        const { address, amount, accountIndex } = payload as {
+          address: string;
+          amount: number;
+          accountIndex: number;
+        };
+
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+
+        const { privateKey } = VaultService.getPrivateKey(accountIndex);
+        const result = await OctraRPC.shieldBalance({
+          address,
+          amount,
+          privateKey,
+        });
+
+        if (result.status === 'accepted') {
+          return { success: true, data: { txHash: result.tx_hash } };
+        }
+
+        return { success: false, error: result.error || 'Shield failed' };
+      }
+
+      case MESSAGE_TYPES.UNSHIELD_BALANCE: {
+        const { address, amount, accountIndex } = payload as {
+          address: string;
+          amount: number;
+          accountIndex: number;
+        };
+
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+
+        const { privateKey } = VaultService.getPrivateKey(accountIndex);
+        const result = await OctraRPC.unshieldBalance({
+          address,
+          amount,
+          privateKey,
+        });
+
+        if (result.status === 'accepted') {
+          return { success: true, data: { txHash: result.tx_hash } };
+        }
+
+        return { success: false, error: result.error || 'Unshield failed' };
+      }
+
       // === dApp Operations ===
       case 'DAPP_CONNECT_REQUEST': {
         // For now, auto-approve if wallet is unlocked

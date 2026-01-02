@@ -266,46 +266,46 @@ export default function Dashboard() {
       </div>
 
       {/* Action Buttons - rectangular with margins */}
-      <div style={{ padding: '8px 16px', display: 'flex', gap: '8px' }}>
+      <div style={{ padding: '8px 16px', display: 'flex', gap: '6px' }}>
         <button
           onClick={() => navigate('/send')}
-          style={{ flex: 1, padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
+          style={{ flex: 1, padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
           className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-xs uppercase tracking-wider"
         >
-          <svg style={{ width: '22px', height: '22px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M7 11l5-5m0 0l5 5m-5-5v12" />
           </svg>
           SEND
         </button>
 
         <button
-          onClick={() => navigate('/send-private')}
-          style={{ flex: 1, padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
-          className="bg-purple-600 hover:bg-purple-700 transition-colors text-white font-semibold text-xs uppercase tracking-wider"
-        >
-          <svg style={{ width: '22px', height: '22px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          PRIVATE
-        </button>
-
-        <button
           onClick={() => navigate('/receive')}
-          style={{ flex: 1, padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
+          style={{ flex: 1, padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
           className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-xs uppercase tracking-wider"
         >
-          <svg style={{ width: '22px', height: '22px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M17 13l-5 5m0 0l-5-5m5 5V6" />
           </svg>
           RECEIVE
         </button>
 
         <button
+          onClick={() => navigate('/shield')}
+          style={{ flex: 1, padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
+          className="bg-purple-600 hover:bg-purple-700 transition-colors text-white font-semibold text-xs uppercase tracking-wider"
+        >
+          <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          SHIELD
+        </button>
+
+        <button
           onClick={() => navigate('/history')}
-          style={{ flex: 1, padding: '14px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}
+          style={{ flex: 1, padding: '12px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}
           className="bg-octra-blue hover:bg-octra-blue-hover transition-colors text-white font-semibold text-xs uppercase tracking-wider"
         >
-          <svg style={{ width: '22px', height: '22px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           HISTORY
@@ -315,22 +315,31 @@ export default function Dashboard() {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Network indicator - clickable to toggle */}
-      <button
-        onClick={toggleNetwork}
-        style={{ padding: '16px' }}
-        className="w-full border-t border-border-primary hover:bg-bg-hover transition-colors"
-      >
-        <div className="flex items-center justify-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${network === 'mainnet' ? 'bg-accent-green' : 'bg-yellow-500'}`} />
-          <span className="text-xs text-text-tertiary uppercase tracking-wider">
-            {NETWORKS[network]?.name || 'Mainnet'}
-          </span>
-          <svg style={{ width: '12px', height: '12px' }} className="text-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
-          </svg>
-        </div>
-      </button>
+      {/* Network switcher - more visible */}
+      <div style={{ padding: '12px 16px' }} className="border-t border-border-primary">
+        <button
+          onClick={toggleNetwork}
+          style={{ padding: '12px 16px' }}
+          className={`w-full flex items-center justify-between transition-colors ${
+            network === 'mainnet'
+              ? 'bg-accent-green/10 border border-accent-green/30 hover:bg-accent-green/20'
+              : 'bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${network === 'mainnet' ? 'bg-accent-green' : 'bg-yellow-500'}`} />
+            <span className={`text-sm font-medium ${network === 'mainnet' ? 'text-accent-green' : 'text-yellow-500'}`}>
+              {NETWORKS[network]?.name || 'Mainnet'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-text-tertiary">
+            <span className="text-xs uppercase tracking-wider">Switch</span>
+            <svg style={{ width: '14px', height: '14px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          </div>
+        </button>
+      </div>
     </div>
   );
 }

@@ -309,6 +309,68 @@ export class OctraRPC {
   }
 
   /**
+   * Shield - convert public balance to private balance
+   */
+  static async shieldBalance(data: {
+    address: string;
+    amount: number;
+    privateKey: string;
+  }): Promise<SendTxResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/shield`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: data.address,
+          amount: Math.floor(data.amount * Math.pow(10, OCTRA_CONFIG.TOKEN_DECIMALS)),
+          private_key: data.privateKey,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && (result.status === 'accepted' || result.tx_hash)) {
+        return { status: 'accepted', tx_hash: result.tx_hash };
+      }
+
+      return { status: 'failed', error: result.error || 'Shield failed' };
+    } catch (error) {
+      return { status: 'failed', error: error instanceof Error ? error.message : 'Network error' };
+    }
+  }
+
+  /**
+   * Unshield - convert private balance to public balance
+   */
+  static async unshieldBalance(data: {
+    address: string;
+    amount: number;
+    privateKey: string;
+  }): Promise<SendTxResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/unshield`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: data.address,
+          amount: Math.floor(data.amount * Math.pow(10, OCTRA_CONFIG.TOKEN_DECIMALS)),
+          private_key: data.privateKey,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && (result.status === 'accepted' || result.tx_hash)) {
+        return { status: 'accepted', tx_hash: result.tx_hash };
+      }
+
+      return { status: 'failed', error: result.error || 'Unshield failed' };
+    } catch (error) {
+      return { status: 'failed', error: error instanceof Error ? error.message : 'Network error' };
+    }
+  }
+
+  /**
    * Set network (mainnet/testnet)
    */
   static setNetwork(networkId: NetworkId): void {
