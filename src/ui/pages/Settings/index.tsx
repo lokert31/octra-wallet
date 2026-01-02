@@ -850,6 +850,25 @@ export default function Settings() {
           </div>
         </div>
 
+        {/* Open Fullpage */}
+        <div style={{ padding: '0 16px 16px 16px' }}>
+          <button
+            onClick={() => chrome.tabs.create({ url: chrome.runtime.getURL('src/ui/fullpage/index.html') })}
+            style={{ padding: '16px' }}
+            className="w-full flex items-center justify-between border border-octra-blue bg-octra-blue/10 hover:bg-octra-blue/20 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <svg style={{ width: '20px', height: '20px' }} className="text-octra-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              <span className="font-semibold text-sm uppercase tracking-wider text-octra-blue">Open Full Version</span>
+            </div>
+            <svg style={{ width: '20px', height: '20px' }} className="text-octra-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+
         {/* About */}
         <div style={{ padding: '0 16px 16px 16px' }}>
           <h2 className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-3">
