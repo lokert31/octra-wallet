@@ -95,3 +95,28 @@ export interface SendFormData {
   amount: string;
   feeTier: string;
 }
+
+// Private transaction types
+export interface PrivateBalanceResponse {
+  encrypted_balance?: string;
+  decrypted_balance?: string;
+  has_private_balance: boolean;
+}
+
+export interface PendingTransfer {
+  id: string;
+  from: string;
+  to: string;
+  amount: string;
+  encrypted_amount?: string;
+  timestamp: number;
+  status: 'pending' | 'claimed' | 'expired';
+}
+
+export interface PrivateTransferData {
+  from: string;
+  to: string;
+  amount: number;
+  from_private_key: string;
+  to_public_key: string;
+}

@@ -1,9 +1,11 @@
-import { OCTRA_CONFIG } from '@shared/constants';
+import { OCTRA_CONFIG, NETWORKS, type NetworkId } from '@shared/constants';
 import type {
   BalanceResponse,
   SendTxResponse,
   AddressInfoResponse,
   SignedTransaction,
+  PrivateBalanceResponse,
+  PendingTransfer,
 } from '@shared/types';
 
 /**
@@ -179,5 +181,147 @@ export class OctraRPC {
   static parseBalance(balanceMicro: string): number {
     const balance = parseInt(balanceMicro) || 0;
     return balance / Math.pow(10, OCTRA_CONFIG.TOKEN_DECIMALS);
+  }
+
+  /**
+   * Get public key for an address (needed for private transfers)
+   */
+  static async getPublicKey(address: string): Promise<string | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/public_key/${address}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.public_key || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get encrypted private balance
+   */
+  static async getPrivateBalance(address: string, privateKey: string): Promise<PrivateBalanceResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/view_encrypted_balance/${address}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Private-Key': privateKey,
+        },
+      });
+
+      if (!response.ok) {
+        return { has_private_balance: false };
+      }
+
+      const data = await response.json();
+      return {
+        encrypted_balance: data.encrypted_balance,
+        decrypted_balance: data.decrypted_balance,
+        has_private_balance: !!data.encrypted_balance || !!data.decrypted_balance,
+      };
+    } catch {
+      return { has_private_balance: false };
+    }
+  }
+
+  /**
+   * Send private transfer
+   */
+  static async sendPrivateTransfer(data: {
+    from: string;
+    to: string;
+    amount: number;
+    fromPrivateKey: string;
+    toPublicKey: string;
+  }): Promise<SendTxResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/private_transfer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: data.from,
+          to: data.to,
+          amount: Math.floor(data.amount * Math.pow(10, OCTRA_CONFIG.TOKEN_DECIMALS)),
+          from_private_key: data.fromPrivateKey,
+          to_public_key: data.toPublicKey,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'accepted') {
+        return { status: 'accepted', tx_hash: result.tx_hash };
+      }
+
+      return { status: 'failed', error: result.error || 'Private transfer failed' };
+    } catch (error) {
+      return { status: 'failed', error: error instanceof Error ? error.message : 'Network error' };
+    }
+  }
+
+  /**
+   * Get pending private transfers
+   */
+  static async getPendingTransfers(address: string): Promise<PendingTransfer[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/pending_private_transfers?address=${address}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.pending_transfers || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Claim private transfer
+   */
+  static async claimPrivateTransfer(transferId: string, privateKey: string): Promise<SendTxResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/claim_private_transfer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transfer_id: transferId,
+          private_key: privateKey,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'accepted') {
+        return { status: 'accepted', tx_hash: result.tx_hash };
+      }
+
+      return { status: 'failed', error: result.error || 'Claim failed' };
+    } catch (error) {
+      return { status: 'failed', error: error instanceof Error ? error.message : 'Network error' };
+    }
+  }
+
+  /**
+   * Set network (mainnet/testnet)
+   */
+  static setNetwork(networkId: NetworkId): void {
+    const network = NETWORKS[networkId];
+    if (network) {
+      this.baseUrl = network.rpcUrl;
+    }
+  }
+
+  /**
+   * Get current endpoint
+   */
+  static getEndpoint(): string {
+    return this.baseUrl;
   }
 }

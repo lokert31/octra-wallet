@@ -1,7 +1,7 @@
 import { VaultService } from '@core/storage/vault';
 import { OctraRPC } from '@core/rpc/client';
 import { TransactionBuilder } from '@core/transaction/builder';
-import { MESSAGE_TYPES, STORAGE_KEYS, OCTRA_CONFIG } from '@shared/constants';
+import { MESSAGE_TYPES, STORAGE_KEYS, OCTRA_CONFIG, NETWORKS, type NetworkId } from '@shared/constants';
 import { onMessage } from '@shared/messaging';
 import type { WalletMessage, WalletResponse } from '@shared/types';
 
@@ -318,6 +318,100 @@ async function handleMessage(
         return { success: true };
       }
 
+      // === Network Operations ===
+      case MESSAGE_TYPES.GET_NETWORK: {
+        const result = await chrome.storage.local.get(STORAGE_KEYS.NETWORK);
+        const networkId = (result[STORAGE_KEYS.NETWORK] as NetworkId) || 'mainnet';
+        return { success: true, data: networkId };
+      }
+
+      case MESSAGE_TYPES.SET_NETWORK: {
+        const { networkId } = payload as { networkId: NetworkId };
+        if (!NETWORKS[networkId]) {
+          return { success: false, error: 'Invalid network' };
+        }
+        await chrome.storage.local.set({ [STORAGE_KEYS.NETWORK]: networkId });
+        OctraRPC.setNetwork(networkId);
+        return { success: true };
+      }
+
+      // === Private Transaction Operations ===
+      case MESSAGE_TYPES.GET_PRIVATE_BALANCE: {
+        const { address, accountIndex } = payload as { address: string; accountIndex: number };
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+        const { privateKey } = VaultService.getPrivateKey(accountIndex);
+        const privateBalance = await OctraRPC.getPrivateBalance(address, privateKey);
+        return { success: true, data: privateBalance };
+      }
+
+      case MESSAGE_TYPES.SEND_PRIVATE_TRANSFER: {
+        const { from, to, amount, accountIndex } = payload as {
+          from: string;
+          to: string;
+          amount: number;
+          accountIndex: number;
+        };
+
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+
+        // Get sender's private key
+        const { privateKey } = VaultService.getPrivateKey(accountIndex);
+
+        // Get recipient's public key
+        const toPublicKey = await OctraRPC.getPublicKey(to);
+        if (!toPublicKey) {
+          return { success: false, error: 'Could not get recipient public key' };
+        }
+
+        // Send private transfer
+        const result = await OctraRPC.sendPrivateTransfer({
+          from,
+          to,
+          amount,
+          fromPrivateKey: privateKey,
+          toPublicKey,
+        });
+
+        if (result.status === 'accepted') {
+          return { success: true, data: { txHash: result.tx_hash } };
+        }
+
+        return { success: false, error: result.error || 'Private transfer failed' };
+      }
+
+      case MESSAGE_TYPES.GET_PENDING_TRANSFERS: {
+        const { address } = payload as { address: string };
+        const pending = await OctraRPC.getPendingTransfers(address);
+        return { success: true, data: pending };
+      }
+
+      case MESSAGE_TYPES.CLAIM_PRIVATE_TRANSFER: {
+        const { transferId, accountIndex } = payload as { transferId: string; accountIndex: number };
+
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+
+        const { privateKey } = VaultService.getPrivateKey(accountIndex);
+        const result = await OctraRPC.claimPrivateTransfer(transferId, privateKey);
+
+        if (result.status === 'accepted') {
+          return { success: true, data: { txHash: result.tx_hash } };
+        }
+
+        return { success: false, error: result.error || 'Claim failed' };
+      }
+
+      case MESSAGE_TYPES.GET_PUBLIC_KEY: {
+        const { address } = payload as { address: string };
+        const publicKey = await OctraRPC.getPublicKey(address);
+        return { success: true, data: publicKey };
+      }
+
       default:
         return { success: false, error: `Unknown message type: ${type}` };
     }
@@ -333,15 +427,22 @@ async function handleMessage(
 // Initialize message listener
 onMessage(handleMessage);
 
-// Load custom RPC URL on startup
-async function initRpcUrl() {
-  const result = await chrome.storage.local.get(STORAGE_KEYS.RPC_URL);
-  const rpcUrl = result[STORAGE_KEYS.RPC_URL] as string | undefined;
-  if (rpcUrl) {
-    OctraRPC.setEndpoint(rpcUrl);
+// Load network and RPC URL on startup
+async function initNetwork() {
+  // First check for custom RPC URL
+  const rpcResult = await chrome.storage.local.get(STORAGE_KEYS.RPC_URL);
+  const customRpcUrl = rpcResult[STORAGE_KEYS.RPC_URL] as string | undefined;
+
+  if (customRpcUrl) {
+    OctraRPC.setEndpoint(customRpcUrl);
+  } else {
+    // Use network setting
+    const networkResult = await chrome.storage.local.get(STORAGE_KEYS.NETWORK);
+    const networkId = (networkResult[STORAGE_KEYS.NETWORK] as NetworkId) || 'mainnet';
+    OctraRPC.setNetwork(networkId);
   }
 }
 
-// Auto-load wallet and RPC URL on startup
+// Auto-load wallet and network on startup
 VaultService.init();
-initRpcUrl();
+initNetwork();

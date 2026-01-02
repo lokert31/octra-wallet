@@ -1,6 +1,26 @@
+// Network definitions
+export const NETWORKS = {
+  mainnet: {
+    id: 'mainnet',
+    name: 'Mainnet',
+    rpcUrl: 'https://octra.network',
+    explorerUrl: 'https://octrascan.io',
+    chainId: 1,
+  },
+  testnet: {
+    id: 'testnet',
+    name: 'Testnet',
+    rpcUrl: 'https://testnet.octra.network',
+    explorerUrl: 'https://testnet.octrascan.io',
+    chainId: 2,
+  },
+} as const;
+
+export type NetworkId = keyof typeof NETWORKS;
+
 // Octra Network Configuration
 export const OCTRA_CONFIG = {
-  // RPC endpoint
+  // Default RPC endpoint (can be overridden)
   RPC_URL: 'https://octra.network',
 
   // Network info
@@ -109,6 +129,17 @@ export const MESSAGE_TYPES = {
   // RPC
   GET_RPC_URL: 'GET_RPC_URL',
   SET_RPC_URL: 'SET_RPC_URL',
+
+  // Network
+  GET_NETWORK: 'GET_NETWORK',
+  SET_NETWORK: 'SET_NETWORK',
+
+  // Private transactions
+  GET_PRIVATE_BALANCE: 'GET_PRIVATE_BALANCE',
+  SEND_PRIVATE_TRANSFER: 'SEND_PRIVATE_TRANSFER',
+  GET_PENDING_TRANSFERS: 'GET_PENDING_TRANSFERS',
+  CLAIM_PRIVATE_TRANSFER: 'CLAIM_PRIVATE_TRANSFER',
+  GET_PUBLIC_KEY: 'GET_PUBLIC_KEY',
 } as const;
 
 // Storage keys
@@ -122,6 +153,7 @@ export const STORAGE_KEYS = {
   AUTO_LOCK_TIMEOUT: 'octra_auto_lock_timeout',
   PENDING_TRANSACTIONS: 'octra_pending_txs',
   RPC_URL: 'octra_rpc_url',
+  NETWORK: 'octra_network',
 } as const;
 
 // Explorer URL

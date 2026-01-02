@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import type { Account, ToastState } from '@shared/types';
-import { STORAGE_KEYS } from '@shared/constants';
+import type { Account, ToastState, PendingTransfer } from '@shared/types';
+import { STORAGE_KEYS, type NetworkId } from '@shared/constants';
 
 export interface PendingTransaction {
   hash: string;
@@ -34,6 +34,9 @@ interface WalletState {
   isInitialized: boolean;
   isLocked: boolean;
 
+  // Network state
+  network: NetworkId;
+
   // Account state
   accounts: Account[];
   activeAccountIndex: number;
@@ -41,6 +44,12 @@ interface WalletState {
   // Balance cache
   balances: Record<string, string>;
   nonces: Record<string, number>;
+
+  // Private balance cache
+  privateBalances: Record<string, string>;
+
+  // Pending private transfers
+  pendingPrivateTransfers: PendingTransfer[];
 
   // Pending transactions
   pendingTransactions: PendingTransaction[];
@@ -52,6 +61,7 @@ interface WalletState {
   // Actions
   setInitialized: (initialized: boolean) => void;
   setLocked: (locked: boolean) => void;
+  setNetwork: (network: NetworkId) => void;
   setAccounts: (accounts: Account[]) => void;
   setActiveAccountIndex: (index: number) => void;
   addAccount: (account: Account) => void;
@@ -59,6 +69,8 @@ interface WalletState {
   renameAccount: (index: number, name: string) => void;
   updateBalance: (address: string, balance: string) => void;
   updateNonce: (address: string, nonce: number) => void;
+  updatePrivateBalance: (address: string, balance: string) => void;
+  setPendingPrivateTransfers: (transfers: PendingTransfer[]) => void;
   addPendingTransaction: (tx: PendingTransaction) => void;
   removePendingTransaction: (hash: string) => void;
   loadPendingTransactions: () => Promise<void>;
@@ -71,10 +83,13 @@ export const useWalletStore = create<WalletState>((set) => ({
   // Initial state
   isInitialized: false,
   isLocked: true,
+  network: 'mainnet',
   accounts: [],
   activeAccountIndex: 0,
   balances: {},
   nonces: {},
+  privateBalances: {},
+  pendingPrivateTransfers: [],
   pendingTransactions: [],
   toast: null,
   isLoading: false,
@@ -83,6 +98,8 @@ export const useWalletStore = create<WalletState>((set) => ({
   setInitialized: (initialized) => set({ isInitialized: initialized }),
 
   setLocked: (locked) => set({ isLocked: locked }),
+
+  setNetwork: (network) => set({ network }),
 
   setAccounts: (accounts) => set({ accounts }),
 
@@ -118,6 +135,13 @@ export const useWalletStore = create<WalletState>((set) => ({
     set((state) => ({
       nonces: { ...state.nonces, [address]: nonce },
     })),
+
+  updatePrivateBalance: (address, balance) =>
+    set((state) => ({
+      privateBalances: { ...state.privateBalances, [address]: balance },
+    })),
+
+  setPendingPrivateTransfers: (transfers) => set({ pendingPrivateTransfers: transfers }),
 
   addPendingTransaction: (tx) => {
     set((state) => {

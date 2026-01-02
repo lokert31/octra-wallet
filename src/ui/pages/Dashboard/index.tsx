@@ -2,18 +2,44 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWalletStore, useActiveAccount } from '@ui/store/wallet.store';
 import { sendMessage } from '@shared/messaging';
-import { MESSAGE_TYPES, OCTRA_CONFIG, UI_CONFIG } from '@shared/constants';
+import { MESSAGE_TYPES, OCTRA_CONFIG, UI_CONFIG, NETWORKS, type NetworkId } from '@shared/constants';
 import { AccountSelector } from '@ui/components/wallet/AccountSelector';
 import { Spinner } from '@ui/components/common/Spinner';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const activeAccount = useActiveAccount();
-  const { balances, updateBalance, showToast } = useWalletStore();
+  const { balances, updateBalance, showToast, network, setNetwork } = useWalletStore();
   const [isHidden, setIsHidden] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const balance = activeAccount ? balances[activeAccount.address] : undefined;
+
+  // Load network on mount
+  useEffect(() => {
+    loadNetwork();
+  }, []);
+
+  const loadNetwork = async () => {
+    const response = await sendMessage<void, NetworkId>(MESSAGE_TYPES.GET_NETWORK);
+    if (response.success && response.data) {
+      setNetwork(response.data);
+    }
+  };
+
+  const toggleNetwork = async () => {
+    const newNetwork: NetworkId = network === 'mainnet' ? 'testnet' : 'mainnet';
+    const response = await sendMessage<{ networkId: NetworkId }, void>(
+      MESSAGE_TYPES.SET_NETWORK,
+      { networkId: newNetwork }
+    );
+    if (response.success) {
+      setNetwork(newNetwork);
+      showToast(`Switched to ${NETWORKS[newNetwork].name}`, 'success');
+      // Refresh balance for new network
+      fetchBalance();
+    }
+  };
 
   useEffect(() => {
     if (activeAccount) {
@@ -207,13 +233,22 @@ export default function Dashboard() {
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Network indicator */}
-      <div style={{ padding: '16px' }} className="border-t border-border-primary">
+      {/* Network indicator - clickable to toggle */}
+      <button
+        onClick={toggleNetwork}
+        style={{ padding: '16px' }}
+        className="w-full border-t border-border-primary hover:bg-bg-hover transition-colors"
+      >
         <div className="flex items-center justify-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-accent-green" />
-          <span className="text-xs text-text-tertiary uppercase tracking-wider">{OCTRA_CONFIG.NETWORK_NAME}</span>
+          <div className={`w-2 h-2 rounded-full ${network === 'mainnet' ? 'bg-accent-green' : 'bg-yellow-500'}`} />
+          <span className="text-xs text-text-tertiary uppercase tracking-wider">
+            {NETWORKS[network]?.name || 'Mainnet'}
+          </span>
+          <svg style={{ width: '12px', height: '12px' }} className="text-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+          </svg>
         </div>
-      </div>
+      </button>
     </div>
   );
 }
