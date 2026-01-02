@@ -6,6 +6,7 @@ import { MESSAGE_TYPES, OCTRA_CONFIG, EXPLORER_URL } from '@shared/constants';
 import { OctraKeyring } from '@core/crypto/keyring';
 import { Button } from '@ui/components/common/Button';
 import { Input } from '@ui/components/common/Input';
+import { QRScanner } from '@ui/components/QRScanner';
 
 export default function SendPrivate() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export default function SendPrivate() {
   const [amount, setAmount] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [showScanner, setShowScanner] = useState(false);
 
   const privateBalance = activeAccount ? privateBalances[activeAccount.address] : '0';
   const availableBalance = parseFloat(privateBalance || '0');
@@ -79,6 +81,19 @@ export default function SendPrivate() {
     setAmount(availableBalance.toString());
   };
 
+  const handleQRScan = (result: string) => {
+    let address = result;
+    if (result.startsWith('octra:')) {
+      address = result.replace('octra:', '').split('?')[0];
+    }
+    setRecipient(address);
+    setShowScanner(false);
+  };
+
+  if (showScanner) {
+    return <QRScanner onScan={handleQRScan} onClose={() => setShowScanner(false)} />;
+  }
+
   return (
     <div className="flex flex-col h-screen bg-bg-primary">
       {/* Header */}
@@ -108,13 +123,25 @@ export default function SendPrivate() {
         {/* Recipient */}
         <div>
           <label className="block text-sm text-text-secondary mb-2">Recipient Address</label>
-          <Input
-            type="text"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            placeholder="oct..."
-            className="font-mono"
-          />
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              placeholder="oct..."
+              className="font-mono flex-1"
+            />
+            <button
+              onClick={() => setShowScanner(true)}
+              style={{ padding: '14px' }}
+              className="bg-bg-secondary border border-border-primary hover:border-purple-500 transition-colors"
+              title="Scan QR Code"
+            >
+              <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Amount */}

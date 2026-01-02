@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@ui/components/common/Button';
 import { Input } from '@ui/components/common/Input';
+import { QRScanner } from '@ui/components/QRScanner';
 import { useWalletStore, useActiveAccount, useAccountBalance } from '@ui/store/wallet.store';
 import { sendMessage } from '@shared/messaging';
 import { MESSAGE_TYPES, OCTRA_CONFIG, FEE_TIERS, EXPLORER_URL } from '@shared/constants';
@@ -18,6 +19,7 @@ export default function Send() {
   const [feeTier, setFeeTier] = useState<keyof typeof FEE_TIERS>('LOW');
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [errors, setErrors] = useState<{ to?: string; amount?: string }>({});
 
   // Account picker state
@@ -38,6 +40,16 @@ export default function Send() {
     setTo(address);
     setShowAccountPicker(false);
     setAccountSearch('');
+  };
+
+  const handleQRScan = (result: string) => {
+    // Extract address from QR code (might be just address or octra:address format)
+    let address = result;
+    if (result.startsWith('octra:')) {
+      address = result.replace('octra:', '').split('?')[0];
+    }
+    setTo(address);
+    setShowScanner(false);
   };
 
   const fee = FEE_TIERS[feeTier].fee;
@@ -135,6 +147,11 @@ export default function Send() {
   };
 
   const truncateAddress = (addr: string) => `${addr.slice(0, 10)}...${addr.slice(-8)}`;
+
+  // QR Scanner
+  if (showScanner) {
+    return <QRScanner onScan={handleQRScan} onClose={() => setShowScanner(false)} />;
+  }
 
   // Confirmation screen
   if (showConfirm) {
@@ -234,6 +251,16 @@ export default function Send() {
                 errors.to ? 'border-accent-red' : 'border-border-primary focus:border-octra-blue'
               }`}
             />
+            <button
+              onClick={() => setShowScanner(true)}
+              style={{ padding: '14px' }}
+              className="bg-bg-secondary border border-border-primary hover:border-octra-blue transition-colors"
+              title="Scan QR Code"
+            >
+              <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+            </button>
           </div>
           {errors.to && <p className="text-xs text-accent-red mt-1">{errors.to}</p>}
 
