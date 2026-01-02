@@ -5,6 +5,12 @@ import { MESSAGE_TYPES, STORAGE_KEYS, OCTRA_CONFIG, NETWORKS, type NetworkId } f
 import { onMessage } from '@shared/messaging';
 import type { WalletMessage, WalletResponse } from '@shared/types';
 
+// Helper to get active account index
+async function getActiveAccountIndex(): Promise<number> {
+  const result = await chrome.storage.local.get(STORAGE_KEYS.ACTIVE_ACCOUNT);
+  return (result[STORAGE_KEYS.ACTIVE_ACCOUNT] as number) ?? 0;
+}
+
 /**
  * Handle messages from UI
  */
@@ -410,6 +416,134 @@ async function handleMessage(
         const { address } = payload as { address: string };
         const publicKey = await OctraRPC.getPublicKey(address);
         return { success: true, data: publicKey };
+      }
+
+      // === dApp Operations ===
+      case 'DAPP_CONNECT_REQUEST': {
+        // For now, auto-approve if wallet is unlocked
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+        const accounts = VaultService.getAccounts();
+        const activeIndex = await getActiveAccountIndex();
+        const account = accounts[activeIndex] || accounts[0];
+        if (account) {
+          return {
+            success: true,
+            data: { address: account.address, publicKey: account.publicKey },
+          };
+        }
+        return { success: false, error: 'No accounts available' };
+      }
+
+      case 'DAPP_GET_ACCOUNT': {
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+        const accounts = VaultService.getAccounts();
+        const activeIndex = await getActiveAccountIndex();
+        const account = accounts[activeIndex] || accounts[0];
+        if (account) {
+          return {
+            success: true,
+            data: { address: account.address, publicKey: account.publicKey },
+          };
+        }
+        return { success: false, error: 'No accounts available' };
+      }
+
+      case 'DAPP_GET_ADDRESS': {
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+        const accounts = VaultService.getAccounts();
+        const activeIndex = await getActiveAccountIndex();
+        const account = accounts[activeIndex] || accounts[0];
+        return { success: true, data: account?.address || null };
+      }
+
+      case 'DAPP_GET_BALANCE': {
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+        const accounts = VaultService.getAccounts();
+        const activeIndex = await getActiveAccountIndex();
+        const account = accounts[activeIndex] || accounts[0];
+        if (!account) {
+          return { success: false, error: 'No accounts available' };
+        }
+        const balanceData = await OctraRPC.getBalance(account.address);
+        return { success: true, data: balanceData.balance };
+      }
+
+      case 'DAPP_SEND_TRANSACTION': {
+        const { to, amount } = payload as { to: string; amount: number; origin: string };
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+
+        const accounts = VaultService.getAccounts();
+        const activeIndex = await getActiveAccountIndex();
+        const account = accounts[activeIndex] || accounts[0];
+        if (!account) {
+          return { success: false, error: 'No accounts available' };
+        }
+
+        const { privateKey, publicKey } = VaultService.getPrivateKey(activeIndex);
+        const balanceData = await OctraRPC.getBalance(account.address);
+        const nonce = balanceData.nonce + 1;
+
+        const signedTx = TransactionBuilder.buildAndSign({
+          from: account.address,
+          to,
+          amount,
+          nonce,
+          feeTier: 'LOW',
+          privateKey,
+          publicKey,
+        });
+
+        const result = await OctraRPC.sendTransaction(signedTx);
+
+        if (result.status === 'accepted') {
+          return { success: true, data: { txHash: result.tx_hash } };
+        }
+
+        return { success: false, error: result.error || 'Transaction failed' };
+      }
+
+      case 'DAPP_SEND_PRIVATE_TRANSFER': {
+        const { to, amount } = payload as { to: string; amount: number; origin: string };
+        if (!VaultService.isUnlocked()) {
+          return { success: false, error: 'Wallet is locked' };
+        }
+
+        const accounts = VaultService.getAccounts();
+        const activeIndex = await getActiveAccountIndex();
+        const account = accounts[activeIndex] || accounts[0];
+        if (!account) {
+          return { success: false, error: 'No accounts available' };
+        }
+
+        const { privateKey } = VaultService.getPrivateKey(activeIndex);
+        const toPublicKey = await OctraRPC.getPublicKey(to);
+        if (!toPublicKey) {
+          return { success: false, error: 'Could not get recipient public key' };
+        }
+
+        const result = await OctraRPC.sendPrivateTransfer({
+          from: account.address,
+          to,
+          amount,
+          fromPrivateKey: privateKey,
+          toPublicKey,
+        });
+
+        if (result.status === 'accepted') {
+          return { success: true, data: { txHash: result.tx_hash } };
+        }
+
+        return { success: false, error: result.error || 'Private transfer failed' };
       }
 
       default:

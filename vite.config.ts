@@ -2,7 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { crx } from '@crxjs/vite-plugin';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync, writeFileSync, readFileSync } from 'fs';
+import { buildSync } from 'esbuild';
 import manifest from './src/manifest';
 
 // Plugin to copy icons after build
@@ -21,6 +22,25 @@ const copyIcons = () => ({
     });
   }
 });
+
+// Pre-build injected script to public folder
+function preBuildInjectedScript() {
+  const publicDir = resolve(__dirname, 'public');
+  if (!existsSync(publicDir)) {
+    mkdirSync(publicDir, { recursive: true });
+  }
+  buildSync({
+    entryPoints: [resolve(__dirname, 'src/content/injected.ts')],
+    bundle: true,
+    outfile: resolve(publicDir, 'injected.js'),
+    format: 'iife',
+    target: 'es2020',
+    minify: true,
+  });
+}
+
+// Build injected script before vite starts
+preBuildInjectedScript();
 
 export default defineConfig({
   plugins: [

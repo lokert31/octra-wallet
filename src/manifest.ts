@@ -26,6 +26,21 @@ export default defineManifest({
     type: 'module',
   },
 
+  content_scripts: [
+    {
+      matches: ['<all_urls>'],
+      js: ['src/content/index.ts'],
+      run_at: 'document_start',
+    },
+  ],
+
+  web_accessible_resources: [
+    {
+      resources: ['injected.js'],
+      matches: ['<all_urls>'],
+    },
+  ],
+
   permissions: [
     'storage',
     'alarms',
