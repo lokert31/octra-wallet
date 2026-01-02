@@ -42,7 +42,7 @@ export function Toast() {
     <div
       style={{
         position: 'fixed',
-        bottom: '16px',
+        top: '16px',
         left: '16px',
         right: '16px',
         padding: '14px 16px',

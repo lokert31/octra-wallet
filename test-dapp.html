@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Octra Wallet - dApp Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #fff;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #3b82f6;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: #1a1a24;
+      border: 1px solid #2a2a3a;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+    }
+    .status-dot.connected {
+      background: #22c55e;
+    }
+    .status-dot.error {
+      background: #ef4444;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #2a2a3a;
+      font-size: 14px;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      color: #666;
+    }
+    .info-value {
+      font-family: monospace;
+      color: #fff;
+      word-break: break-all;
+      text-align: right;
+      max-width: 300px;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    button:disabled {
+      background: #333;
+      cursor: not-allowed;
+    }
+    button.secondary {
+      background: transparent;
+      border: 1px solid #3b82f6;
+      color: #3b82f6;
+    }
+    button.secondary:hover {
+      background: #3b82f6;
+      color: white;
+    }
+    button.purple {
+      background: #9333ea;
+    }
+    button.purple:hover {
+      background: #7c3aed;
+    }
+    .button-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .button-group button {
+      flex: 1;
+    }
+    .log {
+      background: #0d0d12;
+      border: 1px solid #2a2a3a;
+      padding: 16px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #1a1a24;
+    }
+    .log-entry.success {
+      color: #22c55e;
+    }
+    .log-entry.error {
+      color: #ef4444;
+    }
+    .log-entry.info {
+      color: #3b82f6;
+    }
+    input {
+      width: 100%;
+      background: #0d0d12;
+      border: 1px solid #2a2a3a;
+      color: white;
+      padding: 12px;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    input:focus {
+      outline: none;
+      border-color: #3b82f6;
+    }
+    .warning {
+      background: #422006;
+      border: 1px solid #92400e;
+      color: #fbbf24;
+      padding: 12px;
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Octra Wallet dApp Test</h1>
+    <p class="subtitle">Test page for window.octra SDK integration</p>
+
+    <!-- Wallet Status -->
+    <div class="card">
+      <h2>Wallet Status</h2>
+      <div class="status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Checking...</span>
+      </div>
+    </div>
+
+    <!-- Account Info -->
+    <div class="card" id="accountCard" style="display: none;">
+      <h2>Connected Account</h2>
+      <div class="info-row">
+        <span class="info-label">Address</span>
+        <span class="info-value" id="address">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Public Balance</span>
+        <span class="info-value" id="balance">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Network</span>
+        <span class="info-value" id="network">-</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <h2>Actions</h2>
+      <div class="button-group">
+        <button id="connectBtn" onclick="connectWallet()">Connect</button>
+        <button id="disconnectBtn" class="secondary" onclick="disconnectWallet()" disabled>Disconnect</button>
+      </div>
+      <div class="button-group">
+        <button onclick="getBalance()" disabled id="balanceBtn">Get Balance</button>
+        <button onclick="getNetwork()" disabled id="networkBtn">Get Network</button>
+      </div>
+    </div>
+
+    <!-- Send Transaction -->
+    <div class="card">
+      <h2>Send Transaction (Public)</h2>
+      <input type="text" id="sendTo" placeholder="Recipient address (oct...)">
+      <input type="number" id="sendAmount" placeholder="Amount" step="0.000001">
+      <button onclick="sendTransaction()" disabled id="sendBtn">Send</button>
+    </div>
+
+    <!-- Send Private -->
+    <div class="card">
+      <h2>Send Private Transfer</h2>
+      <input type="text" id="privateTo" placeholder="Recipient address (oct...)">
+      <input type="number" id="privateAmount" placeholder="Amount" step="0.000001">
+      <button class="purple" onclick="sendPrivate()" disabled id="privateBtn">Send Private</button>
+    </div>
+
+    <!-- Event Log -->
+    <div class="card">
+      <h2>Event Log</h2>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+
+  <script>
+    let isConnected = false;
+
+    // Log function
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // Update UI state
+    function updateUI(connected, address = null, balance = null, network = null) {
+      isConnected = connected;
+
+      const statusDot = document.getElementById('statusDot');
+      const statusText = document.getElementById('statusText');
+      const accountCard = document.getElementById('accountCard');
+
+      if (connected) {
+        statusDot.className = 'status-dot connected';
+        statusText.textContent = 'Connected';
+        accountCard.style.display = 'block';
+
+        document.getElementById('connectBtn').disabled = true;
+        document.getElementById('disconnectBtn').disabled = false;
+        document.getElementById('balanceBtn').disabled = false;
+        document.getElementById('networkBtn').disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('privateBtn').disabled = false;
+
+        if (address) document.getElementById('address').textContent = address;
+        if (balance) document.getElementById('balance').textContent = balance + ' OCT';
+        if (network) document.getElementById('network').textContent = network;
+      } else {
+        statusDot.className = 'status-dot';
+        statusText.textContent = 'Not connected';
+        accountCard.style.display = 'none';
+
+        document.getElementById('connectBtn').disabled = false;
+        document.getElementById('disconnectBtn').disabled = true;
+        document.getElementById('balanceBtn').disabled = true;
+        document.getElementById('networkBtn').disabled = true;
+        document.getElementById('sendBtn').disabled = true;
+        document.getElementById('privateBtn').disabled = true;
+      }
+    }
+
+    // Check if wallet is available
+    function checkWallet() {
+      if (typeof window.octra !== 'undefined') {
+        log('Octra Wallet detected! Version: ' + window.octra.version, 'success');
+        document.getElementById('statusText').textContent = 'Wallet detected, not connected';
+
+        // Check if already connected
+        window.octra.isConnected().then(connected => {
+          if (connected) {
+            log('Already connected, fetching account...', 'info');
+            window.octra.getAddress().then(addr => {
+              if (addr) {
+                updateUI(true, addr);
+                getBalance();
+                getNetwork();
+              }
+            });
+          }
+        });
+      } else {
+        log('Octra Wallet not detected. Please install the extension.', 'error');
+        document.getElementById('statusDot').className = 'status-dot error';
+        document.getElementById('statusText').textContent = 'Wallet not installed';
+      }
+    }
+
+    // Connect wallet
+    async function connectWallet() {
+      if (!window.octra) {
+        log('Wallet not available', 'error');
+        return;
+      }
+
+      try {
+        log('Requesting connection...', 'info');
+        const result = await window.octra.connect();
+        log(`Connected! Address: ${result.address}`, 'success');
+        updateUI(true, result.address);
+        getBalance();
+        getNetwork();
+      } catch (err) {
+        log(`Connection failed: ${err.message}`, 'error');
+      }
+    }
+
+    // Disconnect wallet
+    async function disconnectWallet() {
+      if (!window.octra) return;
+
+      try {
+        await window.octra.disconnect();
+        log('Disconnected', 'info');
+        updateUI(false);
+      } catch (err) {
+        log(`Disconnect failed: ${err.message}`, 'error');
+      }
+    }
+
+    // Get balance
+    async function getBalance() {
+      if (!window.octra) return;
+
+      try {
+        const balance = await window.octra.getBalance();
+        log(`Balance: ${balance} OCT`, 'success');
+        document.getElementById('balance').textContent = balance + ' OCT';
+      } catch (err) {
+        log(`Get balance failed: ${err.message}`, 'error');
+      }
+    }
+
+    // Get network
+    async function getNetwork() {
+      if (!window.octra) return;
+
+      try {
+        const network = await window.octra.getNetwork();
+        log(`Network: ${network}`, 'success');
+        document.getElementById('network').textContent = network;
+      } catch (err) {
+        log(`Get network failed: ${err.message}`, 'error');
+      }
+    }
+
+    // Send transaction
+    async function sendTransaction() {
+      if (!window.octra) return;
+
+      const to = document.getElementById('sendTo').value;
+      const amount = parseFloat(document.getElementById('sendAmount').value);
+
+      if (!to || !amount) {
+        log('Please enter recipient and amount', 'error');
+        return;
+      }
+
+      try {
+        log(`Sending ${amount} OCT to ${to}...`, 'info');
+        const result = await window.octra.sendTransaction({ to, amount });
+        log(`Transaction sent! Hash: ${result.txHash}`, 'success');
+        document.getElementById('sendTo').value = '';
+        document.getElementById('sendAmount').value = '';
+        getBalance();
+      } catch (err) {
+        log(`Send failed: ${err.message}`, 'error');
+      }
+    }
+
+    // Send private transfer
+    async function sendPrivate() {
+      if (!window.octra) return;
+
+      const to = document.getElementById('privateTo').value;
+      const amount = parseFloat(document.getElementById('privateAmount').value);
+
+      if (!to || !amount) {
+        log('Please enter recipient and amount', 'error');
+        return;
+      }
+
+      try {
+        log(`Sending private transfer of ${amount} OCT to ${to}...`, 'info');
+        const result = await window.octra.sendPrivateTransfer({ to, amount });
+        log(`Private transfer sent! Hash: ${result.txHash}`, 'success');
+        document.getElementById('privateTo').value = '';
+        document.getElementById('privateAmount').value = '';
+      } catch (err) {
+        log(`Private transfer failed: ${err.message}`, 'error');
+      }
+    }
+
+    // Listen for wallet events
+    function setupEventListeners() {
+      if (!window.octra) return;
+
+      window.octra.on('accountChanged', (data) => {
+        log(`Account changed: ${JSON.stringify(data)}`, 'info');
+        if (data.address) {
+          updateUI(true, data.address);
+          getBalance();
+        }
+      });
+
+      window.octra.on('networkChanged', (data) => {
+        log(`Network changed: ${JSON.stringify(data)}`, 'info');
+        if (data.network) {
+          document.getElementById('network').textContent = data.network;
+        }
+      });
+
+      window.octra.on('disconnect', () => {
+        log('Wallet disconnected', 'info');
+        updateUI(false);
+      });
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      log('Page loaded, checking for wallet...', 'info');
+
+      // Wait for wallet to inject
+      if (window.octra) {
+        checkWallet();
+        setupEventListeners();
+      } else {
+        window.addEventListener('octra#initialized', () => {
+          log('Wallet initialized event received', 'info');
+          checkWallet();
+          setupEventListeners();
+        });
+
+        // Fallback check after delay
+        setTimeout(() => {
+          if (!window.octra) {
+            log('Wallet not detected after timeout', 'error');
+            document.getElementById('statusDot').className = 'status-dot error';
+            document.getElementById('statusText').textContent = 'Wallet not installed';
+          } else {
+            checkWallet();
+            setupEventListeners();
+          }
+        }, 1000);
+      }
+    });
+  </script>
+</body>
+</html>
