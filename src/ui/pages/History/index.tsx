@@ -121,6 +121,18 @@ export default function History() {
         </button>
       </header>
 
+      {/* Scanner Warning */}
+      <div style={{ padding: '8px 16px' }}>
+        <div style={{ padding: '10px 12px' }} className="bg-yellow-900/30 border border-yellow-500/50 flex items-start gap-3">
+          <svg style={{ width: '18px', height: '18px', marginTop: '1px' }} className="text-yellow-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div className="text-xs text-yellow-500/90">
+            Scanner may show incorrect tx status during mainnet transition. Verify in your balance.
+          </div>
+        </div>
+      </div>
+
       {/* Content */}
       <div style={{ padding: '0 16px' }} className="flex-1 overflow-y-auto">
         {loading ? (
